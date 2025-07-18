@@ -45,9 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             })
           } else {
-            // Create new user profile
+            // Create new user profile with error handling for duplicates
             const newProfile = {
-              id: `user_${Date.now()}`,
+              id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
               userId: state.user.id,
               email: state.user.email || '',
               displayName: state.user.displayName || state.user.email?.split('@')[0] || 'User',
@@ -60,11 +60,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               })
             }
             
-            await blink.db.users.create(newProfile)
-            setUserProfile({
-              ...newProfile,
-              preferences: JSON.parse(newProfile.preferences)
-            })
+            try {
+              await blink.db.users.create(newProfile)
+              setUserProfile({
+                ...newProfile,
+                preferences: JSON.parse(newProfile.preferences)
+              })
+            } catch (createError: any) {
+              // If creation fails due to conflict, try to fetch again
+              if (createError.message?.includes('409') || createError.status === 409) {
+                const retryProfiles = await blink.db.users.list({
+                  where: { userId: state.user.id },
+                  limit: 1
+                })
+                if (retryProfiles.length > 0) {
+                  const profile = retryProfiles[0]
+                  setUserProfile({
+                    ...profile,
+                    preferences: profile.preferences ? JSON.parse(profile.preferences) : {
+                      emailNotifications: true,
+                      deadlineReminders: true,
+                      categories: [],
+                      sources: [],
+                      theme: 'system'
+                    }
+                  })
+                }
+              } else {
+                throw createError
+              }
+            }
           }
         } catch (error) {
           console.error('Error fetching user profile:', error)

@@ -8,16 +8,6 @@ export function useApplications() {
   const [applications, setApplications] = useState<Application[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    if (!user?.id) {
-      setApplications([])
-      setIsLoading(false)
-      return
-    }
-
-    fetchApplications()
-  }, [user?.id, fetchApplications])
-
   const fetchApplications = useCallback(async () => {
     if (!user?.id) return
 
@@ -34,6 +24,16 @@ export function useApplications() {
       setIsLoading(false)
     }
   }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) {
+      setApplications([])
+      setIsLoading(false)
+      return
+    }
+
+    fetchApplications()
+  }, [user?.id, fetchApplications])
 
   const applyToOpportunity = async (opportunityId: string, opportunityTitle: string, opportunitySource: string, deadline?: string) => {
     if (!user?.id) return

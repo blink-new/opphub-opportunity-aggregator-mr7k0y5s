@@ -31,12 +31,12 @@ export function Sidebar({ filters, onFiltersChange }: SidebarProps) {
       <Card className="p-4 space-y-4">
         <div>
           <Label className="text-sm font-medium">Category</Label>
-          <Select value={filters.category || ''} onValueChange={(value) => updateFilter('category', value || undefined)}>
+          <Select value={filters.category || 'all'} onValueChange={(value) => updateFilter('category', value === 'all' ? undefined : value)}>
             <SelectTrigger className="mt-2">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               <SelectItem value="internship">Internships</SelectItem>
               <SelectItem value="hackathon">Hackathons</SelectItem>
               <SelectItem value="contest">Contests</SelectItem>
@@ -47,12 +47,12 @@ export function Sidebar({ filters, onFiltersChange }: SidebarProps) {
 
         <div>
           <Label className="text-sm font-medium">Source Platform</Label>
-          <Select value={filters.source || ''} onValueChange={(value) => updateFilter('source', value || undefined)}>
+          <Select value={filters.source || 'all'} onValueChange={(value) => updateFilter('source', value === 'all' ? undefined : value)}>
             <SelectTrigger className="mt-2">
               <SelectValue placeholder="All Sources" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Sources</SelectItem>
+              <SelectItem value="all">All Sources</SelectItem>
               <SelectItem value="unstop">Unstop</SelectItem>
               <SelectItem value="devfolio">Devfolio</SelectItem>
               <SelectItem value="hackerearth">HackerEarth</SelectItem>
@@ -63,12 +63,12 @@ export function Sidebar({ filters, onFiltersChange }: SidebarProps) {
 
         <div>
           <Label className="text-sm font-medium">Difficulty Level</Label>
-          <Select value={filters.difficulty || ''} onValueChange={(value) => updateFilter('difficulty', value || undefined)}>
+          <Select value={filters.difficulty || 'all'} onValueChange={(value) => updateFilter('difficulty', value === 'all' ? undefined : value)}>
             <SelectTrigger className="mt-2">
               <SelectValue placeholder="All Levels" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Levels</SelectItem>
+              <SelectItem value="all">All Levels</SelectItem>
               <SelectItem value="beginner">Beginner</SelectItem>
               <SelectItem value="intermediate">Intermediate</SelectItem>
               <SelectItem value="advanced">Advanced</SelectItem>
@@ -78,12 +78,12 @@ export function Sidebar({ filters, onFiltersChange }: SidebarProps) {
 
         <div>
           <Label className="text-sm font-medium">Location</Label>
-          <Select value={filters.location || ''} onValueChange={(value) => updateFilter('location', value || undefined)}>
+          <Select value={filters.location || 'all'} onValueChange={(value) => updateFilter('location', value === 'all' ? undefined : value)}>
             <SelectTrigger className="mt-2">
               <SelectValue placeholder="All Locations" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Locations</SelectItem>
+              <SelectItem value="all">All Locations</SelectItem>
               <SelectItem value="remote">Remote</SelectItem>
               <SelectItem value="india">India</SelectItem>
               <SelectItem value="usa">USA</SelectItem>
