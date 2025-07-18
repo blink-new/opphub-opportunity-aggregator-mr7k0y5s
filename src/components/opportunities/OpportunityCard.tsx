@@ -1,22 +1,23 @@
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Bookmark, BookmarkCheck, Calendar, MapPin, ExternalLink, Clock } from 'lucide-react'
+import { Bookmark, BookmarkCheck, Calendar, MapPin, ExternalLink, Clock, CheckCircle } from 'lucide-react'
 import { Opportunity } from '@/types/opportunity'
+import { useApplications } from '@/hooks/useApplications'
+import { useBookmarks } from '@/hooks/useBookmarks'
+import { useAuth } from '@/hooks/useAuth'
 import { useState } from 'react'
 
 interface OpportunityCardProps {
   opportunity: Opportunity
-  onBookmark: (id: string) => void
+  onBookmark?: (id: string) => void
 }
 
-export function OpportunityCard({ opportunity, onBookmark }: OpportunityCardProps) {
-  const [isBookmarked, setIsBookmarked] = useState(opportunity.isBookmarked)
-
-  const handleBookmark = () => {
-    setIsBookmarked(!isBookmarked)
-    onBookmark(opportunity.id)
-  }
+export function OpportunityCard({ opportunity }: OpportunityCardProps) {
+  const { isAuthenticated } = useAuth()
+  const { applications, applyToOpportunity } = useApplications()
+  const { isBookmarked, toggleBookmark } = useBookmarks()
+  const [isApplying, setIsApplying] = useState(false)
 
   const getSourceColor = (source: string) => {
     switch (source) {
@@ -67,6 +68,59 @@ export function OpportunityCard({ opportunity, onBookmark }: OpportunityCardProp
     return diffDays <= 7 && diffDays >= 0
   }
 
+  const isDeadlinePassed = () => {
+    const date = new Date(opportunity.deadline)
+    const now = new Date()
+    return date < now
+  }
+
+  const hasApplied = applications.some(app => app.opportunityId === opportunity.id)
+  const application = applications.find(app => app.opportunityId === opportunity.id)
+
+  const handleApply = async () => {
+    if (!isAuthenticated) {
+      window.location.reload() // Trigger Blink auth
+      return
+    }
+
+    setIsApplying(true)
+    try {
+      await applyToOpportunity(
+        opportunity.id,
+        opportunity.title,
+        opportunity.source,
+        opportunity.deadline
+      )
+      // Open external link after tracking application
+      window.open(opportunity.applyUrl, '_blank', 'noopener,noreferrer')
+    } catch (error) {
+      console.error('Error applying to opportunity:', error)
+      // Still open the external link even if tracking fails
+      window.open(opportunity.applyUrl, '_blank', 'noopener,noreferrer')
+    } finally {
+      setIsApplying(false)
+    }
+  }
+
+  const handleBookmark = async () => {
+    if (!isAuthenticated) {
+      window.location.reload() // Trigger Blink auth
+      return
+    }
+
+    try {
+      await toggleBookmark(
+        opportunity.id,
+        opportunity.title,
+        opportunity.source,
+        opportunity.category,
+        opportunity.deadline
+      )
+    } catch (error) {
+      console.error('Error toggling bookmark:', error)
+    }
+  }
+
   return (
     <Card className="group hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
       <CardHeader className="pb-3">
@@ -79,7 +133,13 @@ export function OpportunityCard({ opportunity, onBookmark }: OpportunityCardProp
               <Badge variant="outline" className={getSourceColor(opportunity.source)}>
                 {opportunity.source}
               </Badge>
-              {isDeadlineSoon() && (
+              {hasApplied && (
+                <Badge className="bg-green-100 text-green-800">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Applied
+                </Badge>
+              )}
+              {isDeadlineSoon() && !isDeadlinePassed() && (
                 <Badge variant="destructive" className="animate-pulse">
                   <Clock className="w-3 h-3 mr-1" />
                   Urgent
@@ -96,7 +156,7 @@ export function OpportunityCard({ opportunity, onBookmark }: OpportunityCardProp
             onClick={handleBookmark}
             className="shrink-0 ml-2"
           >
-            {isBookmarked ? (
+            {isBookmarked(opportunity.id) ? (
               <BookmarkCheck className="h-4 w-4 text-primary" />
             ) : (
               <Bookmark className="h-4 w-4" />
@@ -148,12 +208,21 @@ export function OpportunityCard({ opportunity, onBookmark }: OpportunityCardProp
 
       <CardFooter className="pt-0">
         <div className="flex gap-2 w-full">
-          <Button asChild className="flex-1">
-            <a href={opportunity.applyUrl} target="_blank" rel="noopener noreferrer">
-              Apply Now
-              <ExternalLink className="w-4 h-4 ml-2" />
-            </a>
-          </Button>
+          {hasApplied ? (
+            <Button variant="outline" className="flex-1" disabled>
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Applied ({application?.status})
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleApply} 
+              className="flex-1"
+              disabled={isApplying || isDeadlinePassed()}
+            >
+              {isApplying ? 'Applying...' : isDeadlinePassed() ? 'Deadline Passed' : 'Apply Now'}
+              {!isApplying && !isDeadlinePassed() && <ExternalLink className="w-4 h-4 ml-2" />}
+            </Button>
+          )}
           <Button variant="outline" size="sm">
             Details
           </Button>
